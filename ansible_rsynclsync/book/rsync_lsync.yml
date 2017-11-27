@@ -1,0 +1,62 @@
+- hosts: test-sv
+  tasks:
+    - name: install the epel repo
+      yum: state=present name={{ item }}
+      with_items:
+        - epel-release
+
+- hosts: test-sv
+  tasks:
+    - firewalld: zone=public port=873/tcp permanent=true state=enabled
+    - name: reload firewalld
+      service: name=firewalld state=restarted
+
+    - name: install the  rsync and lsyncd
+      yum: state=present name={{ item }}
+      with_items:
+        - rsync
+        - lsyncd
+
+    - name: copy files
+      copy: src=/opt/ansible/files/rsyncd.conf dest=/etc/rsyncd.conf owner=root group=root mode=0755
+
+    - name: make syncdir
+      file: path=/opt/sync_dir state=directory owner=root group=root mode=0755
+
+    - name: enable service
+      systemd:
+        name: rsyncd
+        enabled: yes
+        masked: no
+
+    - name: reload rsyncd
+      service: name=rsyncd state=restarted
+
+- hosts: test-sv1
+  tasks:
+    - name: execute rsync
+      #action: command rsync -avz --delete --exclude-from=/opt/rsync_exclude.lst /opt/sync_dir ::backup
+      action: command rsync -a /opt/sync_dir/ root@test-sv2:/opt/sync_dir
+
+    - name: copy files
+      copy: src=/opt/ansible/files/lsyncd.conf_1 dest=/etc/lsyncd.conf owner=root group=root mode=0755
+
+- hosts: test-sv2
+  tasks:
+    - name: execute rsync
+      #action: command rsync -avz --delete --exclude-from=/opt/rsync_exclude.lst /opt/sync_dir ::backup
+      action: command rsync -a /opt/sync_dir/ root@test-sv1:/opt/sync_dir
+
+    - name: copy files
+      copy: src=/opt/ansible/files/lsyncd.conf_2 dest=/etc/lsyncd.conf owner=root group=root mode=0755
+
+- hosts: test-sv
+  tasks:
+    - name: enable service
+      systemd:
+        name: lsyncd
+        enabled: yes
+        masked: no
+
+    - name: reload lsyncd
+      service: name=lsyncd state=restarted

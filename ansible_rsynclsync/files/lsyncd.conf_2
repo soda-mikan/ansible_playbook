@@ -1,0 +1,20 @@
+----
+-- User configuration file for lsyncd.
+--
+-- Simple example for default rsync, but executing moves through on the target.
+--
+-- For more examples, see /usr/share/doc/lsyncd*/examples/
+--
+-- sync{default.rsyncssh, source="/var/www/html", host="localhost", targetdir="/tmp/htmlcopy/"}
+settings{
+    statusFile = "/tmp/lsyncd.stat",
+    statusInterval = 1,
+}
+sync{
+    default.rsync,
+    source="/opt/sync_dir/",
+    target="10.10.10.201::backup",
+    delete="running",
+    init=false,
+}
+
