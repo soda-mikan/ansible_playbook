@@ -44,7 +44,6 @@
 - hosts: test-sv2
   tasks:
     - name: execute rsync
-      #action: command rsync -avz --delete --exclude-from=/opt/rsync_exclude.lst /opt/sync_dir ::backup
       action: command rsync -a /opt/sync_dir/ root@test-sv1:/opt/sync_dir
 
     - name: copy files
